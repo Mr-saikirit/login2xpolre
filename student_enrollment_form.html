@@ -1,0 +1,274 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent}
+.wrap{padding:1.5rem 0;font-family:var(--font-sans)}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.header-icon{width:40px;height:40px;border-radius:var(--border-radius-md);background:#EEEDFE;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-icon i{font-size:20px;color:#534AB7}
+.header-text h2{font-size:17px;font-weight:500;color:var(--color-text-primary);margin:0}
+.header-text p{font-size:13px;color:var(--color-text-secondary);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500;margin-left:auto;flex-shrink:0}
+.badge.new{background:#E1F5EE;color:#0F6E56}
+.badge.existing{background:#EEEDFE;color:#534AB7}
+.badge.idle{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--color-text-secondary);font-weight:500;display:flex;align-items:center;gap:4px}
+.pk-tag{font-size:10px;background:#EEEDFE;color:#534AB7;padding:1px 6px;border-radius:10px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;font-size:14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);transition:border-color 0.15s,box-shadow 0.15s;height:36px}
+.field textarea{height:72px;resize:none}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#534AB7;box-shadow:0 0 0 3px rgba(83,74,183,0.12)}
+.field input:disabled,.field select:disabled,.field textarea:disabled{background:var(--color-background-secondary);color:var(--color-text-tertiary);cursor:not-allowed;border-color:var(--color-border-tertiary)}
+.field input.pk-active{border-color:#534AB7;background:rgba(238,237,254,0.3)}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1.25rem 0}
+.btn-row{display:flex;gap:10px;justify-content:flex-end}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:0 16px;height:36px;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s;border:0.5px solid;font-family:var(--font-sans)}
+.btn-save{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn-save:hover:not(:disabled){background:#3C3489;border-color:#3C3489}
+.btn-update{background:#0F6E56;color:#fff;border-color:#0F6E56}
+.btn-update:hover:not(:disabled){background:#085041;border-color:#085041}
+.btn-reset{background:var(--color-background-primary);color:var(--color-text-secondary);border-color:var(--color-border-secondary)}
+.btn-reset:hover:not(:disabled){background:var(--color-background-secondary)}
+.btn:disabled{opacity:0.38;cursor:not-allowed}
+.btn i{font-size:16px}
+.toast{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--border-radius-md);font-size:13px;margin-bottom:1rem}
+.toast.show{display:flex}
+.toast.success{background:#E1F5EE;color:#085041;border:0.5px solid #5DCAA5}
+.toast.error{background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595}
+.toast.info{background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC}
+.db-preview{margin-top:1.25rem;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.db-header{padding:8px 12px;background:var(--color-background-secondary);font-size:12px;color:var(--color-text-secondary);display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--color-border-tertiary)}
+.db-header strong{color:var(--color-text-primary);font-weight:500}
+.db-table{width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed}
+.db-table th{padding:6px 10px;text-align:left;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.db-table td{padding:6px 10px;color:var(--color-text-primary);border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-table tr:last-child td{border-bottom:none}
+.db-table tr.highlight td{background:rgba(83,74,183,0.06)}
+.empty-db{padding:16px;text-align:center;font-size:13px;color:var(--color-text-tertiary)}
+</style>
+
+<div class="wrap" role="main">
+  <h2 class="sr-only">Student enrollment form for adding and updating student records</h2>
+  <div class="header">
+    <div class="header-icon" aria-hidden="true"><i class="ti ti-school"></i></div>
+    <div class="header-text">
+      <h2>Student enrollment</h2>
+      <p>STUDENT-TABLE · SCHOOL-DB</p>
+    </div>
+    <span class="badge idle" id="status-badge"><i class="ti ti-point-filled" style="font-size:10px"></i><span id="status-text">Ready</span></span>
+  </div>
+
+  <div id="toast" class="toast" role="alert" aria-live="polite">
+    <i class="ti ti-circle-check" id="toast-icon"></i>
+    <span id="toast-msg"></span>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <div class="field full">
+        <label for="rollNo">Roll No. <span class="pk-tag">Primary Key</span></label>
+        <input type="text" id="rollNo" placeholder="e.g. 2024001" autocomplete="off" class="pk-active" />
+      </div>
+      <div class="field full">
+        <label for="fullName">Full name</label>
+        <input type="text" id="fullName" placeholder="Student's full name" disabled />
+      </div>
+      <div class="field">
+        <label for="cls">Class</label>
+        <input type="text" id="cls" placeholder="e.g. 10-A" disabled />
+      </div>
+      <div class="field">
+        <label for="birthDate">Date of birth</label>
+        <input type="date" id="birthDate" disabled />
+      </div>
+      <div class="field full">
+        <label for="address">Address</label>
+        <textarea id="address" placeholder="Full residential address" disabled></textarea>
+      </div>
+      <div class="field">
+        <label for="enrollDate">Enrollment date</label>
+        <input type="date" id="enrollDate" disabled />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="btn-row">
+      <button class="btn btn-reset" id="btnReset" disabled><i class="ti ti-refresh" aria-hidden="true"></i>Reset</button>
+      <button class="btn btn-save" id="btnSave" disabled><i class="ti ti-device-floppy" aria-hidden="true"></i>Save</button>
+      <button class="btn btn-update" id="btnUpdate" disabled><i class="ti ti-edit" aria-hidden="true"></i>Update</button>
+    </div>
+  </div>
+
+  <div class="db-preview">
+    <div class="db-header">
+      <strong>STUDENT-TABLE</strong>
+      <span id="rec-count">0 records</span>
+    </div>
+    <div id="db-body">
+      <div class="empty-db">No records yet — enroll your first student above.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rollNo = $('rollNo'), fullName = $('fullName'), cls = $('cls');
+const birthDate = $('birthDate'), address = $('address'), enrollDate = $('enrollDate');
+const btnSave = $('btnSave'), btnUpdate = $('btnUpdate'), btnReset = $('btnReset');
+const toast = $('toast'), toastMsg = $('toast-msg'), toastIcon = $('toast-icon');
+const statusBadge = $('status-badge'), statusText = $('status-text');
+
+const FIELDS = [fullName, cls, birthDate, address, enrollDate];
+let toastTimer = null;
+let lastChecked = null;
+let highlightRoll = null;
+
+function showToast(msg, type) {
+  clearTimeout(toastTimer);
+  toastMsg.textContent = msg;
+  toast.className = 'toast show ' + type;
+  toastIcon.className = type === 'error' ? 'ti ti-circle-x' : type === 'info' ? 'ti ti-info-circle' : 'ti ti-circle-check';
+  toastTimer = setTimeout(() => { toast.className = 'toast'; }, 3500);
+}
+
+function setStatus(mode) {
+  statusBadge.className = 'badge ' + (mode === 'new' ? 'new' : mode === 'existing' ? 'existing' : 'idle');
+  statusText.textContent = mode === 'new' ? 'New student' : mode === 'existing' ? 'Existing record' : 'Ready';
+}
+
+function resetForm() {
+  rollNo.value = '';
+  FIELDS.forEach(f => { f.value = ''; f.disabled = true; });
+  rollNo.disabled = false;
+  rollNo.classList.add('pk-active');
+  btnSave.disabled = true; btnUpdate.disabled = true; btnReset.disabled = true;
+  setStatus('idle');
+  lastChecked = null;
+  highlightRoll = null;
+  renderTable();
+  setTimeout(() => rollNo.focus(), 50);
+}
+
+async function getRecord(key) {
+  try {
+    const r = await window.storage.get('student:' + key);
+    return r ? JSON.parse(r.value) : null;
+  } catch { return null; }
+}
+
+async function saveRecord(key, data) {
+  await window.storage.set('student:' + key, JSON.stringify(data));
+}
+
+async function getAllRecords() {
+  try {
+    const list = await window.storage.list('student:');
+    const records = [];
+    for (const k of list.keys) {
+      const r = await window.storage.get(k);
+      if (r) records.push(JSON.parse(r.value));
+    }
+    return records;
+  } catch { return []; }
+}
+
+async function renderTable(activeKey) {
+  const records = await getAllRecords();
+  const dbBody = $('db-body');
+  $('rec-count').textContent = records.length + (records.length === 1 ? ' record' : ' records');
+  if (!records.length) {
+    dbBody.innerHTML = '<div class="empty-db">No records yet — enroll your first student above.</div>';
+    return;
+  }
+  const cols = ['Roll No.','Full Name','Class','Birth Date','Address','Enrolled'];
+  const keys = ['rollNo','fullName','cls','birthDate','address','enrollDate'];
+  let html = '<table class="db-table"><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
+  for (const rec of records) {
+    const hl = rec.rollNo === (activeKey || highlightRoll) ? ' class="highlight"' : '';
+    html += '<tr' + hl + '>' + keys.map(k => '<td title="' + (rec[k]||'') + '">' + (rec[k]||'—') + '</td>').join('') + '</tr>';
+  }
+  html += '</tbody></table>';
+  dbBody.innerHTML = html;
+}
+
+async function checkRollNo() {
+  const key = rollNo.value.trim();
+  if (!key || key === lastChecked) return;
+  lastChecked = key;
+
+  const rec = await getRecord(key);
+  if (rec) {
+    fullName.value = rec.fullName;
+    cls.value = rec.cls;
+    birthDate.value = rec.birthDate;
+    address.value = rec.address;
+    enrollDate.value = rec.enrollDate;
+    FIELDS.forEach(f => { f.disabled = false; });
+    rollNo.disabled = true;
+    rollNo.classList.remove('pk-active');
+    btnSave.disabled = true; btnUpdate.disabled = false; btnReset.disabled = false;
+    setStatus('existing');
+    highlightRoll = key;
+    renderTable();
+    showToast('Record found — you can update the details below.', 'info');
+    setTimeout(() => fullName.focus(), 50);
+  } else {
+    FIELDS.forEach(f => { f.value = ''; f.disabled = false; });
+    btnSave.disabled = false; btnUpdate.disabled = true; btnReset.disabled = false;
+    setStatus('new');
+    showToast('Roll No. ' + key + ' not found — fill in the details to enroll.', 'success');
+    setTimeout(() => fullName.focus(), 50);
+  }
+}
+
+function validate() {
+  const vals = [rollNo.value.trim(), fullName.value.trim(), cls.value.trim(), birthDate.value, address.value.trim(), enrollDate.value];
+  if (vals.some(v => !v)) { showToast('All fields are required — please fill in every field.', 'error'); return false; }
+  const rKey = rollNo.value.trim() || lastChecked;
+  if (!rKey) { showToast('Roll No. is required.', 'error'); return false; }
+  return true;
+}
+
+function getFormData() {
+  return {
+    rollNo: (rollNo.value.trim() || lastChecked),
+    fullName: fullName.value.trim(),
+    cls: cls.value.trim(),
+    birthDate: birthDate.value,
+    address: address.value.trim(),
+    enrollDate: enrollDate.value
+  };
+}
+
+btnSave.addEventListener('click', async () => {
+  if (!validate()) return;
+  const data = getFormData();
+  await saveRecord(data.rollNo, data);
+  highlightRoll = data.rollNo;
+  showToast('Student ' + data.fullName + ' enrolled successfully!', 'success');
+  await renderTable(data.rollNo);
+  setTimeout(() => resetForm(), 1800);
+});
+
+btnUpdate.addEventListener('click', async () => {
+  if (!validate()) return;
+  const data = getFormData();
+  await saveRecord(data.rollNo, data);
+  highlightRoll = data.rollNo;
+  showToast('Record updated for Roll No. ' + data.rollNo + '.', 'success');
+  await renderTable(data.rollNo);
+  setTimeout(() => resetForm(), 1800);
+});
+
+btnReset.addEventListener('click', () => resetForm());
+
+rollNo.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); checkRollNo(); }
+});
+rollNo.addEventListener('blur', () => checkRollNo());
+
+resetForm();
+</script>
